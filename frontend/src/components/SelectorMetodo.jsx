@@ -1,4 +1,4 @@
-import { METODOS, esCerrado } from '../lib/metodos.js';
+import { METODOS } from '../lib/metodos.js';
 
 /** Lista de métodos con radios estilizados, su etiqueta y su descripción. */
 export default function SelectorMetodo({ valor, onCambiar }) {
@@ -19,7 +19,6 @@ export default function SelectorMetodo({ valor, onCambiar }) {
             />
             <span className="metodo-marca" aria-hidden="true" />
             <span className="metodo-nombre">{m.nombre}</span>
-            <span className="metodo-clase">{esCerrado(m) ? 'cerrado' : 'abierto'}</span>
           </label>
         ))}
       </div>

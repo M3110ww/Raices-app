@@ -1,33 +1,37 @@
 /*
- * Lenguaje visual: cianotipo nocturno y rótulos de plano técnico.
+ * Lenguaje visual: oscuro, neutro y sin adornos.
  *
  * Reglas que se mantienen en todo el archivo: bordes rectos (nada de esquinas
- * redondeadas), líneas en vez de sombras, y ningún degradado. El contraste lo
- * pone el color, no el relieve: la rejilla queda al fondo y el cian y el ámbar
- * se reservan para lo que hay que mirar. Los colores viven todos en variables,
- * que es también de donde los lee el lienzo (ver leerTema en lib/dibujo.js).
+ * redondeadas), líneas en vez de sombras, ningún degradado y un solo acento. La
+ * jerarquía la marcan el espacio y el contraste del gris, no el color: el ámbar
+ * aparece únicamente donde hay algo que señalar. Los colores viven todos en
+ * variables, que es también de donde los lee el lienzo (ver leerTema en
+ * lib/dibujo.js).
  */
 
 /* ------------------------------------------------------------- paleta */
 
 /*
- * Un único tema: cianotipo nocturno. Copia heliográfica invertida, con la
- * rejilla apagada para que las curvas y la raíz se lean de lejos.
+ * Un único tema: neutro casi negro.
+ *
+ * La escala es gris puro, sin tinte de color, y el ámbar es el único acento de
+ * toda la interfaz: marca la raíz en la gráfica y lo que está seleccionado. La
+ * curva f(x) va en casi blanco porque es el asunto del dibujo; g(x) lleva un
+ * verde apagado solo para poder distinguirla.
  */
 :root {
-  --mesa: #050d19;
-  --papel: #0c2139;
-  --rejilla-fina: #143254;
-  --rejilla-gruesa: #27598c;
-  --tinta: #edf5ff;
-  --tinta-suave: #93b5d8;
-  --curva: #35dcff;
-  --marca: #ffaf1f;
-  --curva-g: #57f2a6;
-  --realce: #16375c;
+  --mesa: #08080a;
+  --papel: #101013;
+  --rejilla-fina: #1b1b1f;
+  --rejilla-gruesa: #2e2e34;
+  --tinta: #f2f2f4;
+  --tinta-suave: #8b8b94;
+  --curva: #ececef;
+  --marca: #f0a830;
+  --curva-g: #5fb8a0;
+  --realce: #1c1c21;
 
   --borde: 1px solid var(--rejilla-gruesa);
-  --borde-fuerte: 2px solid var(--curva);
   --paso: 14px;
 }
 
@@ -51,10 +55,6 @@ body {
   font-family: 'B612', system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 15px;
   line-height: 1.45;
-  /* Un milimetrado muy tenue en la mesa, para que la hoja destaque. */
-  background-image:
-    repeating-linear-gradient(to right, var(--rejilla-fina) 0 1px, transparent 1px 16px),
-    repeating-linear-gradient(to bottom, var(--rejilla-fina) 0 1px, transparent 1px 16px);
 }
 
 .mono,
@@ -88,7 +88,6 @@ body {
   padding: var(--paso);
   background: var(--papel);
   border: var(--borde);
-  border-top: var(--borde-fuerte);
 }
 
 .cabecera {
@@ -101,11 +100,11 @@ body {
   margin-bottom: var(--paso);
 }
 
-/* Un filete de cian a la izquierda del título, como el margen de un plano. */
+/* Único adorno de la cabecera: un filete de ámbar a la izquierda del título. */
 .cabecera h1 {
   margin: 0;
   padding-left: 12px;
-  border-left: 4px solid var(--curva);
+  border-left: 3px solid var(--marca);
   font-size: 1.5rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -302,7 +301,7 @@ body {
 .salida-mono {
   display: block;
   padding: 7px 8px;
-  border: 1px dashed var(--tinta-suave);
+  border: 1px dashed var(--rejilla-gruesa);
   font-size: 0.9rem;
   min-height: 2.2em;
   overflow-wrap: anywhere;
@@ -311,7 +310,7 @@ body {
 .salida-grande {
   font-size: 1rem;
   border-style: solid;
-  border-color: var(--curva);
+  border-color: var(--rejilla-gruesa);
   background: var(--realce);
 }
 
@@ -321,7 +320,7 @@ body {
   gap: 8px;
   margin: 0;
   padding: 10px;
-  border: 1px dashed var(--tinta-suave);
+  border: 1px dashed var(--rejilla-gruesa);
 }
 
 .grupo legend {
@@ -389,11 +388,11 @@ body {
   cursor: not-allowed;
 }
 
-/* El único elemento lleno de color: lo que hay que pulsar para calcular. */
+/* El único botón relleno: blanco sobre el fondo, ámbar al apuntarlo. */
 .boton-principal {
   padding: 11px 12px;
-  border: 2px solid var(--curva);
-  background: var(--curva);
+  border: 1px solid var(--tinta);
+  background: var(--tinta);
   color: var(--mesa);
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -440,7 +439,7 @@ body {
 /* ----------------------------------------------------------- plegables */
 
 .plegable {
-  border: 1px dashed var(--tinta-suave);
+  border: 1px dashed var(--rejilla-gruesa);
 }
 
 .plegable-cabeza {
@@ -481,7 +480,7 @@ body {
 
 .metodo {
   display: grid;
-  grid-template-columns: 16px 1fr auto;
+  grid-template-columns: 16px 1fr;
   align-items: center;
   gap: 8px;
   padding: 5px 7px;
@@ -510,7 +509,7 @@ body {
 }
 
 .metodo-activo {
-  border-color: var(--curva);
+  border-color: var(--marca);
   background: var(--realce);
 }
 
@@ -526,14 +525,6 @@ body {
   outline-offset: 2px;
 }
 
-.metodo-clase {
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--tinta-suave);
-  border: 1px solid var(--tinta-suave);
-  padding: 0 4px;
-}
 
 /* ---------------------------------------------------------- segmentado */
 
@@ -563,7 +554,7 @@ body {
 }
 
 .segmento-activo {
-  background: var(--curva);
+  background: var(--tinta);
   color: var(--mesa);
 }
 

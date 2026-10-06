@@ -6,7 +6,6 @@ import {
   MAX_ITERACIONES_POR_OMISION,
   TOPE_ITERACIONES,
   buscarMetodo,
-  esCerrado,
 } from './lib/metodos.js';
 import { ErrorApi, hayServidor, resolver, servidorDisponible } from './lib/api.js';
 import { buscarCambiosDeSigno, vistaPara } from './lib/vista.js';
@@ -513,9 +512,7 @@ export default function App() {
         <span>
           Motor {resultado ? resultado.motor : motor === 'java' ? 'Java (servidor)' : 'navegador'}
         </span>
-        <span>
-          {esCerrado(metodo) ? 'Método cerrado' : 'Método abierto'} · {metodo.nombre}
-        </span>
+        <span>{metodo.nombre}</span>
         <span>Espacio: reproducir · ← →: paso</span>
       </footer>
     </div>
