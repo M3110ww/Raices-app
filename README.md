@@ -409,3 +409,4 @@ tocar cinco cosas:
 
 En la gráfica: arrastrar mueve la vista, la rueda hace zoom centrado en el cursor
 (con `Shift` solo en x, con `Alt` solo en y) y el doble clic vuelve a encuadrar.
+"# Raices-app" 
