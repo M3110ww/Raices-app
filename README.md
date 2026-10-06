@@ -202,9 +202,12 @@ Vercel no ejecuta Java, así que el backend va aparte, en Render.
 
 1. Entra en [vercel.com](https://vercel.com) → **Add New** → **Project** e
    importa el repositorio.
-2. Deja la configuración tal cual: `vercel.json` ya indica cómo compilar
-   `frontend/`. En concreto, **no** cambies el *Root Directory* a `frontend`,
-   porque el propio `vercel.json` ya entra en esa carpeta.
+2. Pon el *Root Directory* en **`./`** y el *Application Preset* en **Other**.
+   Vercel detecta el Vite de `frontend/` y propone ese directorio como raíz,
+   pero el `vercel.json` ya entra en la carpeta por su cuenta: con ambas cosas
+   la ruta se duplica y el build muere con `cd: frontend: No such file or
+   directory`. Los campos de *Build and Output Settings* se dejan vacíos, que
+   el `vercel.json` ya los aporta.
 3. **Antes de pulsar Deploy**, despliega *Environment Variables* y añade:
 
    ```
@@ -215,16 +218,28 @@ Vercel no ejecuta Java, así que el backend va aparte, en Render.
    cargar la página. Si se añade después del primer despliegue, hay que volver
    a desplegar para que surta efecto.
 
+La instancia actual quedó en `https://raices-app-drab.vercel.app`.
+
 ### 3. Cerrar CORS
 
-Con la URL de Vercel ya conocida, vuelve a Render y cambia la variable de
-entorno del backend:
+Con la URL de Vercel ya conocida, vuelve a Render → **Environment** y cambia la
+variable de entorno del backend:
 
 ```
-CORS_ORIGENES = https://raices-app.vercel.app
+CORS_ORIGENES = https://raices-app-drab.vercel.app
 ```
 
-Admite varias separadas por comas. Al guardar, Render reinicia el servicio.
+Sin barra al final: el navegador envía el `Origin` sin ella y la comparación es
+exacta. Admite varios orígenes separados por comas, lo que resulta útil para
+conservar `http://localhost:5173` durante el desarrollo. Al guardar, Render
+reinicia el servicio.
+
+## En producción
+
+| Pieza | URL |
+| --- | --- |
+| Frontend (Vercel) | <https://raices-app-drab.vercel.app> |
+| API (Render) | <https://raices-api-cbhg.onrender.com> |
 
 ## Documentación de la API
 
