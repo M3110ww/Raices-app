@@ -24,10 +24,6 @@ export default function Cajetin({ resultado, funcion, iteracion, decimales }) {
     { titulo: 'f(raíz)', valor: sci(resultado.fRaiz, 3), mono: true },
     { titulo: 'Error final', valor: sci(resultado.errorFinal, 3), mono: true },
     { titulo: 'Iteraciones', valor: String(resultado.iteracionesRealizadas), mono: true },
-    {
-      titulo: 'Motor',
-      valor: resultado.motor === 'java' ? 'Java (servidor)' : 'Navegador',
-    },
     { titulo: 'Tiempo', valor: `${resultado.tiempoMs} ms`, mono: true },
   ];
 

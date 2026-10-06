@@ -7,7 +7,7 @@ import {
   TOPE_ITERACIONES,
   buscarMetodo,
 } from './lib/metodos.js';
-import { ErrorApi, hayServidor, resolver, servidorDisponible } from './lib/api.js';
+import { ErrorApi, resolver } from './lib/api.js';
 import { buscarCambiosDeSigno, vistaPara } from './lib/vista.js';
 import { derivadaSimbolica } from './lib/derivada.js';
 import { xsDelPaso } from './lib/dibujo.js';
@@ -69,7 +69,6 @@ export default function App() {
   const [sinMovimiento] = useState(prefiereSinMovimiento);
 
   const [resultado, setResultado] = useState(null);
-  const [aviso, setAviso] = useState(null);
   const [error, setError] = useState(null);
   const [calculando, setCalculando] = useState(false);
 
@@ -81,11 +80,6 @@ export default function App() {
   const [decimales, setDecimales] = useState(6);
 
   const [vista, setVista] = useState({ x0: -3, x1: 3, y0: -3, y1: 3 });
-
-  const [motor, setMotor] = useState(hayServidor() ? 'java' : 'navegador');
-  const [estadoServidor, setEstadoServidor] = useState(
-    hayServidor() ? 'conectando' : 'sin-configurar',
-  );
 
   const [derivadaAuto, setDerivadaAuto] = useState(null);
   const [avisoDerivada, setAvisoDerivada] = useState(null);
@@ -165,7 +159,6 @@ export default function App() {
     setResultado(null);
     setPaso(-1);
     setReproduciendo(false);
-    setAviso(null);
     setError(null);
   }, []);
 
@@ -182,30 +175,6 @@ export default function App() {
     reencuadrar(resultado, paso);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paso, acercarEnCadaPaso, resultado]);
-
-  // ------------------------------------------------------ estado del servidor
-
-  useEffect(() => {
-    if (!hayServidor()) {
-      setEstadoServidor('sin-configurar');
-      return;
-    }
-    let vivo = true;
-    setEstadoServidor('conectando');
-    servidorDisponible().then((ok) => {
-      if (vivo) setEstadoServidor(ok ? 'conectado' : 'caido');
-    });
-    return () => {
-      vivo = false;
-    };
-  }, []);
-
-  const reintentarServidor = useCallback(async () => {
-    if (!hayServidor()) return;
-    setEstadoServidor('conectando');
-    const ok = await servidorDisponible();
-    setEstadoServidor(ok ? 'conectado' : 'caido');
-  }, []);
 
   // ------------------------------------------------------ derivada simbólica
 
@@ -253,18 +222,15 @@ export default function App() {
 
   const calcular = useCallback(async () => {
     setError(null);
-    setAviso(null);
     setCalculando(true);
     try {
-      const { resultado: res, aviso: av } = await resolver(solicitud(), motor);
+      const res = await resolver(solicitud());
       setResultado(res);
-      setAviso(av);
       yaAnimado.current = null;
       reencuadrar(res, -1);
       setPaso(0);
       setT(sinMovimiento ? 1 : 0);
       setReproduciendo(true); // al calcular, se reproduce solo
-      if (av) setEstadoServidor('caido');
     } catch (e) {
       setResultado(null);
       setPaso(-1);
@@ -273,7 +239,7 @@ export default function App() {
     } finally {
       setCalculando(false);
     }
-  }, [solicitud, motor, reencuadrar, sinMovimiento]);
+  }, [solicitud, reencuadrar, sinMovimiento]);
 
   // ------------------------------------------------------------ animación
 
@@ -418,10 +384,6 @@ export default function App() {
           errorG={compiladaG.error}
           derivadaAuto={derivadaAuto}
           avisoDerivada={avisoDerivada}
-          motor={motor}
-          onMotor={setMotor}
-          estadoServidor={estadoServidor}
-          onReintentar={reintentarServidor}
           onBuscarCambioDeSigno={buscarEnLaVista}
           onCalcular={calcular}
           calculando={calculando}
@@ -444,18 +406,11 @@ export default function App() {
         </section>
 
         <main className="area-resto">
-          {(error || aviso) && (
+          {error && (
             <div className="mensajes">
-              {error && (
-                <p className="mensaje mensaje-error" role="alert">
-                  <strong>!</strong> {error}
-                </p>
-              )}
-              {aviso && (
-                <p className="mensaje mensaje-aviso" role="status">
-                  <strong>i</strong> {aviso}
-                </p>
-              )}
+              <p className="mensaje mensaje-error" role="alert">
+                <strong>!</strong> {error}
+              </p>
             </div>
           )}
 
@@ -509,9 +464,6 @@ export default function App() {
       </div>
 
       <footer className="pie">
-        <span>
-          Motor {resultado ? resultado.motor : motor === 'java' ? 'Java (servidor)' : 'navegador'}
-        </span>
         <span>{metodo.nombre}</span>
         <span>Espacio: reproducir · ← →: paso</span>
       </footer>

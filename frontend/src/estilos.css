@@ -424,17 +424,6 @@ body {
   min-width: 46px;
 }
 
-.enlace {
-  margin-left: 6px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 0.74rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
 
 /* ----------------------------------------------------------- plegables */
 
@@ -569,36 +558,6 @@ body {
   flex: 0 0 auto;
 }
 
-.estado {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 0.76rem;
-}
-
-.estado-punto {
-  width: 9px;
-  height: 9px;
-  border: 1px solid var(--rejilla-gruesa);
-  background: var(--tinta-suave);
-}
-
-.estado-bien .estado-punto {
-  background: var(--curva-g);
-}
-
-.estado-mal .estado-punto {
-  background: var(--marca);
-}
-
-.estado-esperando .estado-punto {
-  background: var(--realce);
-}
-
-.estado-apagado .estado-punto {
-  background: transparent;
-}
 
 /* ----------------------------------------------------------- deslizador */
 

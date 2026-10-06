@@ -3,7 +3,6 @@ import RaizDeNumero from './RaizDeNumero.jsx';
 import SelectorMetodo from './SelectorMetodo.jsx';
 import ValoresIniciales from './ValoresIniciales.jsx';
 import CriterioParada from './CriterioParada.jsx';
-import SelectorMotor from './SelectorMotor.jsx';
 
 /** Panel lateral con todo lo que se puede configurar antes de calcular. */
 export default function PanelControles({
@@ -14,10 +13,6 @@ export default function PanelControles({
   errorG,
   derivadaAuto,
   avisoDerivada,
-  motor,
-  onMotor,
-  estadoServidor,
-  onReintentar,
   onBuscarCambioDeSigno,
   onCalcular,
   calculando,
@@ -57,13 +52,6 @@ export default function PanelControles({
         />
 
         <CriterioParada datos={datos} actualizar={actualizar} />
-
-        <SelectorMotor
-          motor={motor}
-          onMotor={onMotor}
-          estado={estadoServidor}
-          onReintentar={onReintentar}
-        />
 
         <button type="submit" className="boton boton-principal" disabled={!puedeCalcular}>
           {calculando ? 'Calculando…' : 'Calcular raíz'}

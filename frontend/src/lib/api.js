@@ -1,59 +1,18 @@
 /**
  * Puente con la API Java, con respaldo en el motor del navegador.
  *
- * Si VITE_API_URL no está configurada, todo se calcula aquí mismo. Si está pero
- * el servidor no responde (el plan gratuito de Render apaga el servicio cuando
- * nadie lo usa), se calcula en el navegador y se avisa, en lugar de dejar a la
- * persona mirando un error.
+ * Los dos motores implementan el mismo algoritmo y devuelven los mismos
+ * números, así que dónde se calcule no cambia el resultado y no es algo que
+ * haya que preguntar ni anunciar. Si VITE_API_URL está configurada se pregunta
+ * al servidor; si no lo está, o no responde, se calcula aquí mismo. El plan
+ * gratuito de Render apaga el servicio cuando nadie lo usa, de modo que ese
+ * respaldo entra en funcionamiento a menudo.
  */
 
 import { resolverLocal } from './metodos.js';
 
 /** URL de la API. Vacía significa "trabajar solo en el navegador". */
-export const API_URL = (import.meta.env?.VITE_API_URL ?? '').replace(/\/+$/, '');
-
-/** True si hay un servidor configurado al que preguntar. */
-export function hayServidor() {
-  return API_URL !== '';
-}
-
-/**
- * Comprueba que el servidor esté despierto.
- *
- * El tiempo de espera es generoso a propósito: un servicio dormido en Render
- * tarda hasta un minuto en arrancar.
- */
-export async function servidorDisponible(timeoutMs = 60000) {
-  if (!hayServidor()) return false;
-  const corte = new AbortController();
-  const reloj = setTimeout(() => corte.abort(), timeoutMs);
-  try {
-    const respuesta = await fetch(`${API_URL}/api/salud`, { signal: corte.signal });
-    if (!respuesta.ok) return false;
-    const datos = await respuesta.json();
-    return datos?.estado === 'ok';
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(reloj);
-  }
-}
-
-/** Pide al servidor el catálogo de métodos. Devuelve null si no se puede. */
-export async function metodosDelServidor(timeoutMs = 60000) {
-  if (!hayServidor()) return null;
-  const corte = new AbortController();
-  const reloj = setTimeout(() => corte.abort(), timeoutMs);
-  try {
-    const respuesta = await fetch(`${API_URL}/api/metodos`, { signal: corte.signal });
-    if (!respuesta.ok) return null;
-    return await respuesta.json();
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(reloj);
-  }
-}
+const API_URL = (import.meta.env?.VITE_API_URL ?? '').replace(/\/+$/, '');
 
 /**
  * Error que trae un mensaje pensado para mostrarse tal cual.
@@ -71,15 +30,12 @@ export class ErrorApi extends Error {
  * Resuelve f(x) = 0.
  *
  * @param {object} solicitud cuerpo de la petición
- * @param {'java'|'navegador'} motor dónde se quiere calcular
- * @returns {Promise<{resultado: object, aviso: string|null}>}
+ * @returns {Promise<object>} el resultado, venga del servidor o del navegador
  * @throws {ErrorApi} si el servidor rechaza la petición (400), porque entonces
  *   el motor local la rechazaría igual y el mensaje ya es el correcto
  */
-export async function resolver(solicitud, motor = 'java') {
-  if (motor !== 'java' || !hayServidor()) {
-    return { resultado: resolverLocal(solicitud), aviso: null };
-  }
+export async function resolver(solicitud) {
+  if (API_URL === '') return resolverLocal(solicitud);
 
   let respuesta;
   try {
@@ -89,11 +45,8 @@ export async function resolver(solicitud, motor = 'java') {
       body: JSON.stringify(solicitud),
     });
   } catch {
-    // Error de red: se recalcula aquí y se avisa.
-    return {
-      resultado: resolverLocal(solicitud),
-      aviso: 'El servidor Java no respondió; se calculó en el navegador',
-    };
+    // Error de red o servidor dormido: se recalcula aquí.
+    return resolverLocal(solicitud);
   }
 
   if (respuesta.status === 400) {
@@ -107,19 +60,11 @@ export async function resolver(solicitud, motor = 'java') {
     throw new ErrorApi(mensaje);
   }
 
-  if (!respuesta.ok) {
-    return {
-      resultado: resolverLocal(solicitud),
-      aviso: `El servidor Java falló (${respuesta.status}); se calculó en el navegador`,
-    };
-  }
+  if (!respuesta.ok) return resolverLocal(solicitud);
 
   try {
-    return { resultado: await respuesta.json(), aviso: null };
+    return await respuesta.json();
   } catch {
-    return {
-      resultado: resolverLocal(solicitud),
-      aviso: 'El servidor Java no respondió; se calculó en el navegador',
-    };
+    return resolverLocal(solicitud);
   }
 }
