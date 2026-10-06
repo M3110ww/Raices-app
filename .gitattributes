@@ -1,0 +1,12 @@
+# Normaliza los finales de línea: el repositorio guarda LF siempre.
+* text=auto eol=lf
+
+# El wrapper de Maven es un script de shell: con CRLF no arranca en Linux ni en
+# macOS, y ahí es donde corren el CI y Render.
+mvnw text eol=lf
+
+# Los scripts de Windows sí necesitan CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.jar binary

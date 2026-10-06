@@ -1,0 +1,969 @@
+/*
+ * Lenguaje visual: papel milimetrado y rótulos de plano técnico.
+ *
+ * Reglas que se mantienen en todo el archivo: bordes rectos (nada de esquinas
+ * redondeadas), líneas de tinta en vez de sombras, y ningún degradado. Los
+ * colores viven todos en variables, que es también de donde los lee el lienzo
+ * (ver leerTema en lib/dibujo.js).
+ */
+
+/* ------------------------------------------------------------- paletas */
+
+:root {
+  /* Tema "papel": milimetrado verde claro con tinta azul oscura. */
+  --papel: #f5f9f7;
+  --rejilla-fina: #e1eee9;
+  --rejilla-gruesa: #bed9d0;
+  --tinta: #1a2a3a;
+  --tinta-suave: #5b6e7c;
+  --curva: #1e5ba8;
+  --marca: #c4302b;
+  --curva-g: #23805a;
+  --mesa: #e7efeb;
+  --realce: #fdf6e3;
+
+  --borde: 1px solid var(--tinta);
+  --paso: 14px;
+}
+
+/* Tema "plano azul": cianotipo, como una copia heliográfica. */
+:root[data-tema='plano'] {
+  --papel: #0f2f52;
+  --rejilla-fina: #16406b;
+  --rejilla-gruesa: #245a8c;
+  --tinta: #eaf2fa;
+  --tinta-suave: #9ab8d4;
+  --curva: #ffffff;
+  --marca: #ffb347;
+  --curva-g: #8ee3b5;
+  --mesa: #081a30;
+  --realce: #1a4675;
+}
+
+/* Si el sistema pide oscuro y nadie ha elegido todavía, se arranca en plano. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema='papel']) {
+    --papel: #0f2f52;
+    --rejilla-fina: #16406b;
+    --rejilla-gruesa: #245a8c;
+    --tinta: #eaf2fa;
+    --tinta-suave: #9ab8d4;
+    --curva: #ffffff;
+    --marca: #ffb347;
+    --curva-g: #8ee3b5;
+    --mesa: #081a30;
+    --realce: #1a4675;
+  }
+}
+
+/* ---------------------------------------------------------------- base */
+
+* {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--mesa);
+  color: var(--tinta);
+  font-family: 'B612', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  /* Un milimetrado muy tenue en la mesa, para que la hoja destaque. */
+  background-image:
+    repeating-linear-gradient(to right, var(--rejilla-fina) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(to bottom, var(--rejilla-fina) 0 1px, transparent 1px 16px);
+}
+
+.mono,
+.entrada-mono,
+.salida-mono,
+.tabla,
+.cajetin-raiz-valor {
+  font-family: 'B612 Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- hoja */
+
+.hoja {
+  max-width: 1420px;
+  margin: var(--paso) auto;
+  padding: var(--paso);
+  background: var(--papel);
+  border: 2px solid var(--tinta);
+}
+
+.cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--paso);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--tinta);
+  margin-bottom: var(--paso);
+}
+
+.cabecera h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.subtitulo {
+  margin: 2px 0 0;
+  color: var(--tinta-suave);
+  font-size: 0.82rem;
+}
+
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--paso);
+  justify-content: space-between;
+  margin-top: var(--paso);
+  padding-top: 8px;
+  border-top: 2px solid var(--tinta);
+  color: var(--tinta-suave);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* -------------------------------------------------------------- tablero */
+
+.tablero {
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    'panel lienzo'
+    'panel resto';
+  gap: var(--paso);
+  align-items: start;
+}
+
+.panel {
+  grid-area: panel;
+  position: sticky;
+  top: var(--paso);
+  align-self: start;
+  max-height: calc(100vh - 2 * var(--paso));
+  overflow-y: auto;
+  border: var(--borde);
+  background: var(--papel);
+}
+
+.panel-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.bloque-lienzo {
+  grid-area: lienzo;
+}
+
+.area-resto {
+  grid-area: resto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--paso);
+  min-width: 0;
+}
+
+@media (max-width: 980px) {
+  .tablero {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'lienzo'
+      'panel'
+      'resto';
+  }
+
+  .panel {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .hoja {
+    margin: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 12px;
+  }
+
+  .cabecera h1 {
+    font-size: 1.2rem;
+  }
+}
+
+/* ------------------------------------------------------------- bloques */
+
+.bloque {
+  border: var(--borde);
+  background: var(--papel);
+  min-width: 0;
+}
+
+.bloque-cabeza {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  border-bottom: var(--borde);
+  background: var(--rejilla-fina);
+}
+
+.bloque-cabeza h2 {
+  margin: 0;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.bloque-acciones {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pista {
+  color: var(--tinta-suave);
+  font-size: 0.72rem;
+}
+
+.vacio {
+  margin: 0;
+  padding: 18px 12px;
+  color: var(--tinta-suave);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------- campos */
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.campo-etiqueta {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--tinta-suave);
+}
+
+.entrada {
+  width: 100%;
+  padding: 7px 8px;
+  border: var(--borde);
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.entrada-mono {
+  font-family: 'B612 Mono', ui-monospace, Consolas, monospace;
+}
+
+.entrada-estrecha {
+  width: auto;
+  padding: 3px 6px;
+  font-size: 0.78rem;
+}
+
+.entrada-mal {
+  border-color: var(--marca);
+  border-width: 2px;
+}
+
+.campo-error {
+  margin: 0;
+  color: var(--marca);
+  font-size: 0.76rem;
+}
+
+.campo-ayuda {
+  margin: 0;
+  color: var(--tinta-suave);
+  font-size: 0.74rem;
+}
+
+.salida-mono {
+  display: block;
+  padding: 7px 8px;
+  border: 1px dashed var(--tinta-suave);
+  font-size: 0.9rem;
+  min-height: 2.2em;
+  overflow-wrap: anywhere;
+}
+
+.salida-grande {
+  font-size: 1rem;
+  border-style: solid;
+  border-color: var(--tinta);
+  background: var(--realce);
+}
+
+.grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed var(--tinta-suave);
+}
+
+.grupo legend {
+  padding: 0 6px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--tinta-suave);
+}
+
+.grupo-derivada {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rejilla-dos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.casilla {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.casilla input {
+  accent-color: var(--marca);
+  width: 15px;
+  height: 15px;
+}
+
+/* ------------------------------------------------------------- botones */
+
+.boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: var(--borde);
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+}
+
+.boton:hover:not(:disabled) {
+  background: var(--rejilla-fina);
+}
+
+.boton:active:not(:disabled) {
+  background: var(--rejilla-gruesa);
+}
+
+.boton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.boton-principal {
+  padding: 11px 12px;
+  border-width: 2px;
+  background: var(--tinta);
+  color: var(--papel);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.boton-principal:hover:not(:disabled) {
+  background: var(--marca);
+  border-color: var(--marca);
+  color: var(--papel);
+}
+
+.boton-secundario {
+  font-size: 0.74rem;
+  padding: 5px 9px;
+}
+
+.boton-tema {
+  flex: 0 0 auto;
+}
+
+.boton-icono {
+  min-width: 38px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+.boton-play {
+  border-width: 2px;
+  min-width: 46px;
+}
+
+.enlace {
+  margin-left: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.74rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------- chips */
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chip {
+  padding: 4px 7px;
+  border: 1px dashed var(--tinta-suave);
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: 'B612 Mono', ui-monospace, Consolas, monospace;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-style: solid;
+  background: var(--rejilla-fina);
+}
+
+.chip-activo {
+  border: 1px solid var(--marca);
+  background: var(--realce);
+  color: var(--tinta);
+}
+
+/* ----------------------------------------------------------- plegables */
+
+.plegable {
+  border: 1px dashed var(--tinta-suave);
+}
+
+.plegable-cabeza {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  background: none;
+  color: var(--tinta);
+  font-family: inherit;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.plegable-cabeza:hover {
+  background: var(--rejilla-fina);
+}
+
+.plegable-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+
+/* ------------------------------------------------------------- métodos */
+
+.metodos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metodo {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.86rem;
+}
+
+.metodo:hover {
+  background: var(--rejilla-fina);
+}
+
+.metodo input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+/* Radio dibujado como una diana, a juego con el resto del lenguaje. */
+.metodo-marca {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--tinta);
+  position: relative;
+}
+
+.metodo-activo {
+  border-color: var(--tinta);
+  background: var(--realce);
+}
+
+.metodo-activo .metodo-marca::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: var(--marca);
+}
+
+.metodo input:focus-visible + .metodo-marca {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
+}
+
+.metodo-clase {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tinta-suave);
+  border: 1px solid var(--tinta-suave);
+  padding: 0 4px;
+}
+
+/* ---------------------------------------------------------- segmentado */
+
+.segmentado {
+  display: flex;
+  border: var(--borde);
+}
+
+.segmento {
+  flex: 1;
+  padding: 6px 8px;
+  border: 0;
+  border-right: var(--borde);
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+}
+
+.segmento:last-child {
+  border-right: 0;
+}
+
+.segmento:hover:not(:disabled) {
+  background: var(--rejilla-fina);
+}
+
+.segmento-activo {
+  background: var(--tinta);
+  color: var(--papel);
+}
+
+.segmento:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.segmentado-pequeno .segmento {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  flex: 0 0 auto;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.76rem;
+}
+
+.estado-punto {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--tinta);
+  background: var(--tinta-suave);
+}
+
+.estado-bien .estado-punto {
+  background: var(--curva-g);
+}
+
+.estado-mal .estado-punto {
+  background: var(--marca);
+}
+
+.estado-esperando .estado-punto {
+  background: var(--realce);
+}
+
+.estado-apagado .estado-punto {
+  background: transparent;
+}
+
+/* ----------------------------------------------------------- deslizador */
+
+.deslizador {
+  width: 100%;
+  accent-color: var(--marca);
+  height: 22px;
+}
+
+.deslizador:disabled {
+  opacity: 0.4;
+}
+
+/* --------------------------------------------------------------- lienzo */
+
+.lienzo-caja {
+  height: clamp(320px, 58vh, 640px);
+  width: 100%;
+}
+
+.lienzo {
+  display: block;
+  /* Hace falta para poder arrastrar con el dedo sin que la página se mueva. */
+  touch-action: none;
+  cursor: crosshair;
+}
+
+/* ---------------------------------------------------------- reproductor */
+
+.reproductor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+}
+
+.reproductor-botones {
+  display: flex;
+  gap: 4px;
+}
+
+.reproductor-barra {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.reproductor-cuenta {
+  font-size: 0.8rem;
+  min-width: 68px;
+  text-align: right;
+}
+
+.reproductor-opciones {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* -------------------------------------------------------- fila resultado */
+
+.fila-resultado {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 360px);
+  gap: var(--paso);
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .fila-resultado {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.mensajes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mensaje {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 10px;
+  border: var(--borde);
+  font-size: 0.84rem;
+}
+
+.mensaje strong {
+  font-family: 'B612 Mono', ui-monospace, monospace;
+}
+
+.mensaje-error {
+  border-color: var(--marca);
+  border-left-width: 4px;
+}
+
+.mensaje-aviso {
+  border-left-width: 4px;
+  background: var(--realce);
+}
+
+/* ------------------------------------------------------------- cajetín */
+
+.cajetin-raiz {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-bottom: var(--borde);
+}
+
+.cajetin-raiz-titulo {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tinta-suave);
+}
+
+.cajetin-raiz-valor {
+  font-size: clamp(1.5rem, 4.5vw, 2.3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+/* Rejilla de celdas con bordes de tinta, como el rótulo de un plano. */
+.cajetin-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0;
+  margin: 0;
+  border-top: 0;
+}
+
+.cajetin-celda {
+  padding: 6px 10px;
+  border-right: var(--borde);
+  border-bottom: var(--borde);
+  min-width: 0;
+}
+
+.cajetin-celda dt {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--tinta-suave);
+}
+
+.cajetin-celda dd {
+  margin: 2px 0 0;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.cajetin-mensaje {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+}
+
+.cajetin-marca {
+  font-family: 'B612 Mono', ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.cajetin-mensaje.es-bien .cajetin-marca {
+  color: var(--curva-g);
+}
+
+.cajetin-mensaje.es-mal .cajetin-marca {
+  color: var(--marca);
+}
+
+/* --------------------------------------------------------- convergencia */
+
+.convergencia-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 6px;
+}
+
+.conv-rejilla {
+  stroke: var(--rejilla-gruesa);
+  stroke-width: 1;
+}
+
+.conv-eje {
+  stroke: var(--tinta);
+  stroke-width: 1.2;
+}
+
+.conv-tolerancia {
+  stroke: var(--curva-g);
+  stroke-width: 1.4;
+  stroke-dasharray: 5 4;
+}
+
+.conv-trazo {
+  fill: none;
+  stroke: var(--curva);
+  stroke-width: 1.8;
+}
+
+.conv-punto {
+  fill: var(--marca);
+  stroke: var(--papel);
+  stroke-width: 1;
+  cursor: pointer;
+  transition: r 120ms linear;
+}
+
+.conv-punto-actual {
+  stroke: var(--tinta);
+  stroke-width: 2;
+}
+
+.conv-texto {
+  fill: var(--tinta-suave);
+  font-family: 'B612 Mono', ui-monospace, monospace;
+  font-size: 9px;
+}
+
+.conv-texto-tolerancia {
+  fill: var(--curva-g);
+}
+
+.convergencia .campo-ayuda {
+  padding: 0 10px 8px;
+}
+
+/* --------------------------------------------------------------- tabla */
+
+.tabla-marco {
+  max-height: 460px;
+  overflow: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.tabla th,
+.tabla td {
+  padding: 4px 8px;
+  border-right: 1px solid var(--rejilla-gruesa);
+  border-bottom: 1px solid var(--rejilla-fina);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabla thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--rejilla-fina);
+  border-bottom: var(--borde);
+  font-size: 0.72rem;
+  text-transform: none;
+  color: var(--tinta);
+}
+
+.tabla tbody tr {
+  cursor: pointer;
+}
+
+.tabla tbody tr:hover {
+  background: var(--rejilla-fina);
+}
+
+.tabla tbody th {
+  text-align: left;
+  color: var(--tinta-suave);
+  font-weight: 400;
+}
+
+.fila-actual {
+  background: var(--realce);
+  outline: 1px solid var(--marca);
+}
+
+.fila-actual th,
+.fila-actual td {
+  font-weight: 700;
+}
+
+.fila-futura {
+  opacity: 0.42;
+}
+
+/* ------------------------------------------------- movimiento reducido */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

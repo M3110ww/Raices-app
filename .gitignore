@@ -1,0 +1,23 @@
+# Java / Maven
+backend/target/
+*.class
+*.jar
+!backend/.mvn/wrapper/*.jar
+
+# Node
+node_modules/
+frontend/dist/
+npm-debug.log*
+.vite/
+
+# Variables de entorno (el .env.example sí se sube)
+.env
+.env.*
+!.env.example
+
+# Editores y sistema
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
