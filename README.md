@@ -185,7 +185,14 @@ Vercel no ejecuta Java, así que el backend va aparte, en Render.
 1. Entra en [render.com](https://render.com) → **New** → **Blueprint**.
 2. Elige este repositorio. Render leerá `render.yaml` y creará un servicio web
    con Docker, plan gratuito y `healthCheckPath` en `/api/salud`.
-3. Apunta la URL que te da, del estilo `https://raices-api.onrender.com`.
+3. Apunta la URL que te da. Si el nombre `raices-api` ya está cogido por otra
+   persona, Render le añade un sufijo: la instancia actual quedó en
+   `https://raices-api-cbhg.onrender.com`.
+
+> Hay que crearlo como **Blueprint**, no como *Web Service* a secas. Un servicio
+> creado a mano ignora `render.yaml`, y con ello el `rootDir: backend`: Render
+> busca entonces un `Dockerfile` en la raíz del repositorio, donde no existe, y
+> el despliegue falla con `open Dockerfile: no such file or directory`.
 
 > El plan gratuito apaga el servicio cuando nadie lo usa, y despertarlo tarda
 > hasta un minuto. Por eso el frontend espera 60 segundos antes de darlo por
@@ -196,14 +203,17 @@ Vercel no ejecuta Java, así que el backend va aparte, en Render.
 1. Entra en [vercel.com](https://vercel.com) → **Add New** → **Project** e
    importa el repositorio.
 2. Deja la configuración tal cual: `vercel.json` ya indica cómo compilar
-   `frontend/`.
-3. En **Settings → Environment Variables** añade:
+   `frontend/`. En concreto, **no** cambies el *Root Directory* a `frontend`,
+   porque el propio `vercel.json` ya entra en esa carpeta.
+3. **Antes de pulsar Deploy**, despliega *Environment Variables* y añade:
 
    ```
-   VITE_API_URL = https://raices-api.onrender.com
+   VITE_API_URL = https://raices-api-cbhg.onrender.com
    ```
 
-4. Vuelve a desplegar para que la variable entre en el build.
+   Vite incrusta esta variable en el bundle durante el build; no la lee al
+   cargar la página. Si se añade después del primer despliegue, hay que volver
+   a desplegar para que surta efecto.
 
 ### 3. Cerrar CORS
 
