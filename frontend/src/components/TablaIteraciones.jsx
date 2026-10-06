@@ -13,7 +13,7 @@ export default function TablaIteraciones({ resultado, paso, decimales, onDecimal
         <div className="bloque-cabeza">
           <h2>Iteraciones</h2>
         </div>
-        <p className="vacio">La tabla se llenará con el detalle de cada paso.</p>
+        <p className="vacio">Aquí irá el detalle de cada paso.</p>
       </section>
     );
   }

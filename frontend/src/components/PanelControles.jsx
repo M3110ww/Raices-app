@@ -1,5 +1,4 @@
 import CampoFuncion from './CampoFuncion.jsx';
-import Ejemplos from './Ejemplos.jsx';
 import RaizDeNumero from './RaizDeNumero.jsx';
 import SelectorMetodo from './SelectorMetodo.jsx';
 import ValoresIniciales from './ValoresIniciales.jsx';
@@ -40,10 +39,8 @@ export default function PanelControles({
           onCambiar={(valor) => actualizar({ funcion: valor })}
           error={errorFuncion}
           placeholder="x^3 - x - 2"
-          ayuda="Se admiten 2x, 3(x+1), x^2, x**2, sen, cos, tan, ln, log(x, base), sqrt, cbrt, abs, pi y e."
+          ayuda="sen, cos, tan, ln, log, sqrt, cbrt, abs, pi, e. Vale 2x y x**2."
         />
-
-        <Ejemplos actual={datos.funcion} onElegir={actualizar} />
 
         <RaizDeNumero onAplicar={actualizar} />
 

@@ -12,7 +12,7 @@ export default function Cajetin({ resultado, funcion, iteracion, decimales }) {
           <h2>Resultado</h2>
         </div>
         <p className="vacio">
-          Escribe f(x), elige un método y pulsa <strong>Calcular raíz</strong>.
+          Elige un método y pulsa <strong>Calcular raíz</strong>.
         </p>
       </section>
     );

@@ -1,4 +1,8 @@
-import { TIPOS_ERROR, TOPE_ITERACIONES } from '../lib/metodos.js';
+import {
+  MAX_ITERACIONES_POR_OMISION,
+  TIPOS_ERROR,
+  TOPE_ITERACIONES,
+} from '../lib/metodos.js';
 import { potenciaDiez } from '../lib/formato.js';
 
 /** Tolerancia, tope de iteraciones y forma de medir el error. */
@@ -43,6 +47,17 @@ export default function CriterioParada({ datos, actualizar }) {
             step="1"
             value={datos.maxIteraciones}
             onChange={(e) => actualizar({ maxIteraciones: e.target.value })}
+            // Al salir del campo se recorta lo que se haya escrito, para que lo
+            // que se ve coincida con lo que se va a enviar al motor.
+            onBlur={(e) => {
+              const v = Number(e.target.value);
+              const valido = Number.isFinite(v)
+                ? Math.min(TOPE_ITERACIONES, Math.max(1, Math.round(v)))
+                : MAX_ITERACIONES_POR_OMISION;
+              if (String(valido) !== String(datos.maxIteraciones)) {
+                actualizar({ maxIteraciones: valido });
+              }
+            }}
           />
         </div>
 

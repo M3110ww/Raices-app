@@ -15,7 +15,6 @@ export default function Lienzo({
   onVista,
   f,
   g,
-  tema,
   resultado,
   paso,
   t,
@@ -44,8 +43,7 @@ export default function Lienzo({
     return () => observador.disconnect();
   }, []);
 
-  // Repintado. Depende de `tema` para que al cambiar de tema se vuelva a leer
-  // la paleta desde las variables CSS.
+  // Repintado. La paleta se lee de las variables CSS en cada pasada.
   useEffect(() => {
     const elemento = lienzo.current;
     if (!elemento) return;
@@ -71,7 +69,7 @@ export default function Lienzo({
       nombreFuncion,
       nombreG,
     });
-  }, [tamano, vista, f, g, tema, resultado, paso, t, cursor, nombreFuncion, nombreG]);
+  }, [tamano, vista, f, g, resultado, paso, t, cursor, nombreFuncion, nombreG]);
 
   const posicion = (evento) => {
     const caja = lienzo.current.getBoundingClientRect();

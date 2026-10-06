@@ -48,7 +48,7 @@ export default function ValoresIniciales({
 
       {esCerrado(metodo) && (
         <button type="button" className="boton boton-secundario" onClick={onBuscarCambioDeSigno}>
-          Buscar cambio de signo en la vista
+          Buscar cambio de signo
         </button>
       )}
 
@@ -59,7 +59,7 @@ export default function ValoresIniciales({
           valor={datos.g}
           onCambiar={(valor) => actualizar({ g: valor })}
           error={errorG}
-          ayuda="La ecuación reescrita como x = g(x). Converge si |g′(x)| < 1 cerca de la raíz."
+          ayuda="x = g(x). Converge si |g′(x)| < 1 cerca de la raíz."
         />
       )}
 

@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { intentarCompilar } from './lib/expresion.js';
-import { METODOS, buscarMetodo, esCerrado } from './lib/metodos.js';
+import {
+  METODOS,
+  MAX_ITERACIONES_POR_OMISION,
+  TOPE_ITERACIONES,
+  buscarMetodo,
+  esCerrado,
+} from './lib/metodos.js';
 import { ErrorApi, hayServidor, resolver, servidorDisponible } from './lib/api.js';
 import { buscarCambiosDeSigno, vistaPara } from './lib/vista.js';
 import { derivadaSimbolica } from './lib/derivada.js';
 import { xsDelPaso } from './lib/dibujo.js';
 
-import BotonTema from './components/BotonTema.jsx';
 import PanelControles from './components/PanelControles.jsx';
 import Lienzo from './components/Lienzo.jsx';
 import Reproductor from './components/Reproductor.jsx';
@@ -18,7 +23,7 @@ import TablaIteraciones from './components/TablaIteraciones.jsx';
 /** Duración base de la animación de un paso, en milisegundos. */
 const DURACION_PASO = 900;
 
-/** Estado inicial del formulario: el primer ejemplo de la lista. */
+/** Estado inicial del formulario: un caso que converge con cualquier método. */
 const DATOS_INICIALES = {
   funcion: 'x^3 - x - 2',
   g: 'cbrt(x+2)',
@@ -35,11 +40,6 @@ const DATOS_INICIALES = {
   tipoError: 'ABSOLUTO',
 };
 
-function temaInicial() {
-  if (typeof window === 'undefined' || !window.matchMedia) return 'papel';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'plano' : 'papel';
-}
-
 function prefiereSinMovimiento() {
   if (typeof window === 'undefined' || !window.matchMedia) return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -52,9 +52,21 @@ function aNumero(texto) {
   return Number.isFinite(v) ? v : null;
 }
 
+/**
+ * Tope de iteraciones que se enviará al motor.
+ *
+ * El campo es de texto, así que mientras se escribe puede quedar vacío o con un
+ * número fuera de rango. En vez de dejar que el motor lo rechace con un error,
+ * se recorta aquí: vacío vuelve al valor por omisión y el resto se acota.
+ */
+function topeIteraciones(texto) {
+  const v = aNumero(texto);
+  if (v === null) return MAX_ITERACIONES_POR_OMISION;
+  return Math.min(TOPE_ITERACIONES, Math.max(1, Math.round(v)));
+}
+
 export default function App() {
   const [datos, setDatos] = useState(DATOS_INICIALES);
-  const [tema, setTema] = useState(temaInicial);
   const [sinMovimiento] = useState(prefiereSinMovimiento);
 
   const [resultado, setResultado] = useState(null);
@@ -86,12 +98,6 @@ export default function App() {
       return METODOS[0];
     }
   }, [datos.metodo]);
-
-  // --------------------------------------------------------------- tema
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-tema', tema);
-  }, [tema]);
 
   // ------------------------------------------------- compilación en vivo
 
@@ -238,7 +244,7 @@ export default function App() {
       x1: aNumero(datos.x1),
       x2: aNumero(datos.x2),
       tolerancia: Math.pow(10, -datos.n),
-      maxIteraciones: Number(datos.maxIteraciones),
+      maxIteraciones: topeIteraciones(datos.maxIteraciones),
       tipoError: datos.tipoError,
     }),
     [datos, metodo, derivadaEfectiva],
@@ -400,11 +406,8 @@ export default function App() {
       <header className="cabecera">
         <div className="cabecera-titulo">
           <h1>Raíces de ecuaciones</h1>
-          <p className="subtitulo">
-            Métodos numéricos para resolver f(x) = 0, paso a paso y sobre papel milimetrado
-          </p>
+          <p className="subtitulo">Resuelve f(x) = 0 paso a paso</p>
         </div>
-        <BotonTema tema={tema} onCambiar={setTema} />
       </header>
 
       <div className="tablero">
@@ -432,7 +435,6 @@ export default function App() {
             onVista={setVista}
             f={f}
             g={g}
-            tema={tema}
             resultado={resultado}
             paso={paso}
             t={t}
@@ -514,7 +516,7 @@ export default function App() {
         <span>
           {esCerrado(metodo) ? 'Método cerrado' : 'Método abierto'} · {metodo.nombre}
         </span>
-        <span>Espacio: reproducir · ← →: paso a paso</span>
+        <span>Espacio: reproducir · ← →: paso</span>
       </footer>
     </div>
   );

@@ -1,60 +1,36 @@
 /*
- * Lenguaje visual: papel milimetrado y rótulos de plano técnico.
+ * Lenguaje visual: cianotipo nocturno y rótulos de plano técnico.
  *
  * Reglas que se mantienen en todo el archivo: bordes rectos (nada de esquinas
- * redondeadas), líneas de tinta en vez de sombras, y ningún degradado. Los
- * colores viven todos en variables, que es también de donde los lee el lienzo
- * (ver leerTema en lib/dibujo.js).
+ * redondeadas), líneas en vez de sombras, y ningún degradado. El contraste lo
+ * pone el color, no el relieve: la rejilla queda al fondo y el cian y el ámbar
+ * se reservan para lo que hay que mirar. Los colores viven todos en variables,
+ * que es también de donde los lee el lienzo (ver leerTema en lib/dibujo.js).
  */
 
-/* ------------------------------------------------------------- paletas */
+/* ------------------------------------------------------------- paleta */
 
+/*
+ * Un único tema: cianotipo nocturno. Copia heliográfica invertida, con la
+ * rejilla apagada para que las curvas y la raíz se lean de lejos.
+ */
 :root {
-  /* Tema "papel": milimetrado verde claro con tinta azul oscura. */
-  --papel: #f5f9f7;
-  --rejilla-fina: #e1eee9;
-  --rejilla-gruesa: #bed9d0;
-  --tinta: #1a2a3a;
-  --tinta-suave: #5b6e7c;
-  --curva: #1e5ba8;
-  --marca: #c4302b;
-  --curva-g: #23805a;
-  --mesa: #e7efeb;
-  --realce: #fdf6e3;
+  --mesa: #050d19;
+  --papel: #0c2139;
+  --rejilla-fina: #143254;
+  --rejilla-gruesa: #27598c;
+  --tinta: #edf5ff;
+  --tinta-suave: #93b5d8;
+  --curva: #35dcff;
+  --marca: #ffaf1f;
+  --curva-g: #57f2a6;
+  --realce: #16375c;
 
-  --borde: 1px solid var(--tinta);
+  --borde: 1px solid var(--rejilla-gruesa);
+  --borde-fuerte: 2px solid var(--curva);
   --paso: 14px;
 }
 
-/* Tema "plano azul": cianotipo, como una copia heliográfica. */
-:root[data-tema='plano'] {
-  --papel: #0f2f52;
-  --rejilla-fina: #16406b;
-  --rejilla-gruesa: #245a8c;
-  --tinta: #eaf2fa;
-  --tinta-suave: #9ab8d4;
-  --curva: #ffffff;
-  --marca: #ffb347;
-  --curva-g: #8ee3b5;
-  --mesa: #081a30;
-  --realce: #1a4675;
-}
-
-/* Si el sistema pide oscuro y nadie ha elegido todavía, se arranca en plano. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema='papel']) {
-    --papel: #0f2f52;
-    --rejilla-fina: #16406b;
-    --rejilla-gruesa: #245a8c;
-    --tinta: #eaf2fa;
-    --tinta-suave: #9ab8d4;
-    --curva: #ffffff;
-    --marca: #ffb347;
-    --curva-g: #8ee3b5;
-    --mesa: #081a30;
-    --realce: #1a4675;
-  }
-}
 
 /* ---------------------------------------------------------------- base */
 
@@ -111,7 +87,8 @@ body {
   margin: var(--paso) auto;
   padding: var(--paso);
   background: var(--papel);
-  border: 2px solid var(--tinta);
+  border: var(--borde);
+  border-top: var(--borde-fuerte);
 }
 
 .cabecera {
@@ -120,19 +97,22 @@ body {
   justify-content: space-between;
   gap: var(--paso);
   padding-bottom: 10px;
-  border-bottom: 2px solid var(--tinta);
+  border-bottom: var(--borde);
   margin-bottom: var(--paso);
 }
 
+/* Un filete de cian a la izquierda del título, como el margen de un plano. */
 .cabecera h1 {
   margin: 0;
+  padding-left: 12px;
+  border-left: 4px solid var(--curva);
   font-size: 1.5rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .subtitulo {
-  margin: 2px 0 0;
+  margin: 4px 0 0 16px;
   color: var(--tinta-suave);
   font-size: 0.82rem;
 }
@@ -144,7 +124,7 @@ body {
   justify-content: space-between;
   margin-top: var(--paso);
   padding-top: 8px;
-  border-top: 2px solid var(--tinta);
+  border-top: var(--borde);
   color: var(--tinta-suave);
   font-size: 0.76rem;
   text-transform: uppercase;
@@ -331,7 +311,7 @@ body {
 .salida-grande {
   font-size: 1rem;
   border-style: solid;
-  border-color: var(--tinta);
+  border-color: var(--curva);
   background: var(--realce);
 }
 
@@ -409,11 +389,12 @@ body {
   cursor: not-allowed;
 }
 
+/* El único elemento lleno de color: lo que hay que pulsar para calcular. */
 .boton-principal {
   padding: 11px 12px;
-  border-width: 2px;
-  background: var(--tinta);
-  color: var(--papel);
+  border: 2px solid var(--curva);
+  background: var(--curva);
+  color: var(--mesa);
   font-weight: 700;
   letter-spacing: 0.12em;
 }
@@ -421,16 +402,16 @@ body {
 .boton-principal:hover:not(:disabled) {
   background: var(--marca);
   border-color: var(--marca);
-  color: var(--papel);
+  color: var(--mesa);
+}
+
+.boton-principal:active:not(:disabled) {
+  background: var(--marca);
 }
 
 .boton-secundario {
   font-size: 0.74rem;
   padding: 5px 9px;
-}
-
-.boton-tema {
-  flex: 0 0 auto;
 }
 
 .boton-icono {
@@ -454,35 +435,6 @@ body {
   font-size: 0.74rem;
   text-decoration: underline;
   cursor: pointer;
-}
-
-/* --------------------------------------------------------------- chips */
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.chip {
-  padding: 4px 7px;
-  border: 1px dashed var(--tinta-suave);
-  background: var(--papel);
-  color: var(--tinta);
-  font-family: 'B612 Mono', ui-monospace, Consolas, monospace;
-  font-size: 0.74rem;
-  cursor: pointer;
-}
-
-.chip:hover {
-  border-style: solid;
-  background: var(--rejilla-fina);
-}
-
-.chip-activo {
-  border: 1px solid var(--marca);
-  background: var(--realce);
-  color: var(--tinta);
 }
 
 /* ----------------------------------------------------------- plegables */
@@ -553,12 +505,12 @@ body {
 .metodo-marca {
   width: 14px;
   height: 14px;
-  border: 1px solid var(--tinta);
+  border: 1px solid var(--rejilla-gruesa);
   position: relative;
 }
 
 .metodo-activo {
-  border-color: var(--tinta);
+  border-color: var(--curva);
   background: var(--realce);
 }
 
@@ -611,8 +563,8 @@ body {
 }
 
 .segmento-activo {
-  background: var(--tinta);
-  color: var(--papel);
+  background: var(--curva);
+  color: var(--mesa);
 }
 
 .segmento:disabled {
@@ -637,7 +589,7 @@ body {
 .estado-punto {
   width: 9px;
   height: 9px;
-  border: 1px solid var(--tinta);
+  border: 1px solid var(--rejilla-gruesa);
   background: var(--tinta-suave);
 }
 
